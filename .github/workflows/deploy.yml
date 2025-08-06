@@ -39,4 +39,7 @@ jobs:
             --platform managed \
             --allow-unauthenticated
 
-      - name: Inject
+      - name: Inject YouTube token
+        run: |
+          mkdir -p config
+          echo "${{ secrets.YOUTUBE_TOKEN_JSON }}" > config/youtube_token.json
