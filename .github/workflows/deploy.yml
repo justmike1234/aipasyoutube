@@ -1,0 +1,42 @@
+name: Deploy to GCP Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: turing-clover-338007
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Configure Docker for GCP
+        run: gcloud auth configure-docker
+
+      - name: Build and push container image
+        run: |
+          IMAGE_NAME="gcr.io/turing-clover-338007/aipasyoutube:latest"
+          gcloud builds submit --tag $IMAGE_NAME
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy aipasyoutube \
+            --image gcr.io/turing-clover-338007/aipasyoutube:latest \
+            --region us-central1 \
+            --platform managed \
+            --allow-unauthenticated
+
+      - name: Inject YouTube token
+        run: |
+          mkdir -p config
+          echo '${{ secrets.YOUTUBE_TOKEN_JSON }}' > config/youtube_token.json
